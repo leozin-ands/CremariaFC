@@ -86,11 +86,12 @@ td{padding:8px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
   <nav id="nav">
     <button class="nb active" data-tab="agenda"><span>🗓</span> Agenda</button>
     <button class="nb" data-tab="elenco"><span>👥</span> Elenco</button>
-    <button class="nb" data-tab="caixa"><span>💰</span> Caixa 2025</button>
-    <button class="nb" data-tab="caixa26"><span>📊</span> Caixa 2026</button>
+    <button class="nb" data-tab="caixa"><span>💰</span> Caixa</button>
     <button class="nb" data-tab="material"><span>📦</span> Material</button>
     <button class="nb" data-tab="patrocinio"><span>🤝</span> Patrocínios</button>
     <button class="nb" data-tab="camisas"><span>👕</span> Camisas 2025</button>
+    <button class="nb" data-tab="camisas26"><span>👕</span> Camisas Torcida 2026</button>
+    <div style="margin:10px 8px 0;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--card);font-size:10px;color:var(--muted);word-break:break-all">PIX<br><b style="color:var(--purple-light);font-size:11px">leobentivoglio@hotmail.com</b></div>
   </nav>
   <div class="sfoot" id="sync">✦ Sincronizado</div>
 </aside>
@@ -100,7 +101,7 @@ td{padding:8px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
       <div class="pt" id="ptitle">Agenda</div>
       <div class="ps" id="psub">Jogos e resultados do CFC</div>
     </div>
-    <div class="pix">PIX: <b>9b317fc4-601c-4f80-aea6-16bca3106370</b></div>
+    <div class="pix" id="adminBox"><button class="btn bpu" id="unlockBtn" onclick="toggleAdmin()">🔒 Diretoria</button></div>
   </div>
   <div class="content" id="content">
     <div class="loading"><div class="spin"></div>Carregando...</div>
@@ -109,7 +110,7 @@ td{padding:8px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
 </div>
 <script>
 
-const PAGES={agenda:{t:'Agenda',s:'Jogos e resultados do CFC'},elenco:{t:'Elenco',s:'Controle de elenco e presença'},caixa:{t:'Caixa 2025',s:'Movimentações financeiras 2025'},caixa26:{t:'Caixa 2026',s:'Movimentações financeiras 2026'},material:{t:'Material',s:'Uniformes e equipamentos'},patrocinio:{t:'Patrocínios',s:'Pacotes e parcerias'},camisas:{t:'Camisas 2025',s:'Pedidos de camisas da torcida'}};
+const PAGES={agenda:{t:'Agenda',s:'Jogos e resultados do CFC'},elenco:{t:'Elenco',s:'Controle de elenco e presença'},caixa:{t:'Caixa',s:'Movimentações financeiras'},material:{t:'Material',s:'Uniformes e equipamentos'},patrocinio:{t:'Patrocínios',s:'Pacotes e parcerias'},camisas:{t:'Camisas 2025',s:'Pedidos de camisas da torcida'},camisas26:{t:'Camisas Torcida 2026',s:'Pedidos de camisas da torcida 2026'}};
 
 const SEED={
 agenda:[
@@ -161,23 +162,40 @@ parcerias:[
   {empresa:'The Box Lounge',modelo:'Pagamento todo dia 15',valor:'100'},
 ],
 camisas:[
-  {nome:'Luiz Alvim',preta:'G',branca:'G',p1:'180,00',p2:'',obs:''},
-  {nome:'Rafael Riul',preta:'GG',branca:'GG',p1:'180,00',p2:'',obs:''},
-  {nome:'Léo Bentivoglio',preta:'G1',branca:'G1',p1:'180,00',p2:'',obs:''},
+  {nome:'Luiz Alvim',preta:'G',branca:'G',p1:'180,00',p2:'N/A',obs:''},
+  {nome:'Rafael Riul',preta:'GG',branca:'GG',p1:'180,00',p2:'N/A',obs:''},
+  {nome:'Léo Bentivoglio',preta:'G1',branca:'G1',p1:'180,00',p2:'N/A',obs:''},
   {nome:'Guilherme Fontes',preta:'G',branca:'G',p1:'90,00',p2:'90,00',obs:''},
-  {nome:'Rafael Tosetto',preta:'G',branca:'X',p1:'50,00',p2:'50,00',obs:'Rick'},
+  {nome:'Rafael Tosetto (Furmiga) - Rick',preta:'G',branca:'X',p1:'50,00',p2:'50,00',obs:''},
+  {nome:'Paulo Pettito - Rick',preta:'G',branca:'X',p1:'100,00',p2:'N/A',obs:''},
   {nome:'Rick',preta:'G1',branca:'G1',p1:'90,00',p2:'90,00',obs:''},
   {nome:'Vick',preta:'GG',branca:'GG',p1:'90,00',p2:'90,00',obs:''},
-  {nome:'Rodrigo Merchan',preta:'G',branca:'G',p1:'180,00',p2:'',obs:''},
-  {nome:'Guilherme Malta',preta:'G',branca:'X',p1:'100,00',p2:'',obs:''},
+  {nome:'Kaique Zuza',preta:'G',branca:'X',p1:'R$50,00',p2:'R$50,00',obs:''},
+  {nome:'Felipe Souto',preta:'X',branca:'M',p1:'R$50,00',p2:'Pendente 50$',obs:''},
+  {nome:'Rodrigo Merchan',preta:'G',branca:'G',p1:'180,00',p2:'N/A',obs:''},
+  {nome:'Bruna Machado',preta:'M',branca:'X',p1:'100,00',p2:'N/A',obs:''},
+  {nome:'Deivid Lara',preta:'G',branca:'X',p1:'100,00',p2:'N/A',obs:''},
+  {nome:'Guilherme Malta',preta:'G',branca:'X',p1:'100,00',p2:'N/A',obs:''},
   {nome:'Roberto (Mayron)',preta:'2 GG',branca:'X',p1:'90,00',p2:'90,00',obs:''},
   {nome:'Rato',preta:'X',branca:'PP & G',p1:'Pendente 90$',p2:'Pendente 90$',obs:''},
-  {nome:'Kenji',preta:'G',branca:'X',p1:'50,00',p2:'50,00',obs:''},
-  {nome:'Biscoito',preta:'G1',branca:'G1',p1:'180,00',p2:'',obs:''},
-  {nome:'Nathan Alves',preta:'G',branca:'X',p1:'Pendente 100$',p2:'',obs:''},
-]};
+  {nome:'Ian',preta:'GG',branca:'X',p1:'100,00',p2:'N/A',obs:''},
+  {nome:'Pedro Rosário',preta:'G',branca:'X',p1:'100,00',p2:'N/A',obs:''},
+  {nome:'Kenji',preta:'G',branca:'X',p1:'R$50,00',p2:'R$50,00',obs:''},
+  {nome:'Daniel Reis',preta:'G',branca:'X',p1:'100,00',p2:'N/A',obs:''},
+  {nome:'Pedrinho',preta:'G e PP',branca:'X',p1:'180,00',p2:'N/A',obs:''},
+  {nome:'Walmir',preta:'X',branca:'M',p1:'100,00',p2:'N/A',obs:''},
+  {nome:'Biscoito',preta:'G1',branca:'G1',p1:'180,00',p2:'N/A',obs:''},
+  {nome:'Stellinha',preta:'X',branca:'PP',p1:'100,00',p2:'N/A',obs:''},
+  {nome:'Nathan Alves',preta:'G',branca:'X',p1:'Pendente 100$',p2:'N/A',obs:''},
+  {nome:'Guga',preta:'G1',branca:'X',p1:'R$50,00',p2:'R$50,00',obs:''},
+  {nome:'Bisteca',preta:'GG',branca:'GG',p1:'Pendente 180$',p2:'N/A',obs:''},
+  {nome:'LK',preta:'G',branca:'X',p1:'59,90',p2:'N/A',obs:''},
+  {nome:'Ju Nogueira',preta:'X',branca:'M',p1:'100,00',p2:'N/A',obs:''},
+],
+camisas26:[]};
 
 let db=null, D=null, activeTab='agenda', saveTimer=null;
+let unlocked=sessionStorage.getItem('cfc-admin')==='1';
 
 async function init(){
   try{
@@ -189,7 +207,9 @@ async function init(){
     const s=localStorage.getItem('cfc');
     D=s?JSON.parse(s):JSON.parse(JSON.stringify(SEED));
   }
+  if(!D._v3){ if(D.caixa26){D.caixa=D.caixa26; delete D.caixa26;} D.camisas=JSON.parse(JSON.stringify(SEED.camisas)); D.camisas26=D.camisas26||[]; D._v3=1; await save(); }
   render();
+  updateAdminBox();
 }
 
 async function save(){
@@ -217,8 +237,9 @@ document.getElementById('nav').addEventListener('click',e=>{
 function render(){
   const c=document.getElementById('content');
   if(!D){c.innerHTML='<div class="loading"><div class="spin"></div>Carregando...</div>';return;}
-  const m={agenda:rAgenda,elenco:rElenco,caixa:()=>rCaixa('caixa'),caixa26:()=>rCaixa('caixa26'),material:rMaterial,patrocinio:rPat,camisas:rCamisas};
+  const m={agenda:rAgenda,elenco:rElenco,caixa:()=>rCaixa('caixa'),material:rMaterial,patrocinio:rPat,camisas:()=>rCamisas('camisas'),camisas26:()=>rCamisas('camisas26')};
   c.innerHTML=(m[activeTab]||rAgenda)();
+  applyEditLock();
   attachEd();
 }
 
@@ -263,7 +284,7 @@ function rAgenda(){
     <button class="btn bpu" onclick="addAgenda()">+ Jogo</button>
   </div>`;
 }
-function addAgenda(){
+function addAgenda(){if(!unlocked)return;
   D.agenda.push({data:v('ad'),campo:v('ac'),adversario:v('aa'),campeonato:v('ap'),resultado:v('ar'),obs:v('ao')});
   sched();render();
 }
@@ -285,8 +306,8 @@ function rElenco(){
       <button class="btn bpu" onclick="addEl('${pos}')">+ Jogador</button>
     </div>`).join('');
 }
-function addEl(pos){const x=v('ne-'+pos);if(!x)return;D.elenco[pos].push(x);sched();render();}
-function delEl(pos,i){D.elenco[pos].splice(i,1);sched();render();}
+function addEl(pos){if(!unlocked)return;const x=v('ne-'+pos);if(!x)return;D.elenco[pos].push(x);sched();render();}
+function delEl(pos,i){if(!unlocked)return;D.elenco[pos].splice(i,1);sched();render();}
 
 // CAIXA
 function rCaixa(key){
@@ -317,7 +338,7 @@ function rCaixa(key){
     <button class="btn bpu" onclick="addCaixa('${key}')">+ Lançamento</button>
   </div>`;
 }
-function addCaixa(key){
+function addCaixa(key){if(!unlocked)return;
   if(!D[key])D[key]=[];
   D[key].push({data:v('cd'),desc:v('cs'),valor:v('cv'),saldo:v('csl'),obs:v('co')});
   sched();render();
@@ -344,8 +365,8 @@ function rMaterial(){
     <button class="btn bpu" onclick="addMat()">+ Item</button>
   </div>`;
 }
-function cycleM(i){const c=['OK','Pendente','Em análise'];D.material[i].status=c[(c.indexOf(D.material[i].status)+1)%c.length];sched();render();}
-function addMat(){D.material.push({item:v('mi'),qtd:v('mq'),status:v('ms')||'Pendente'});sched();render();}
+function cycleM(i){if(!unlocked)return;const c=['OK','Pendente','Em análise'];D.material[i].status=c[(c.indexOf(D.material[i].status)+1)%c.length];sched();render();}
+function addMat(){if(!unlocked)return;D.material.push({item:v('mi'),qtd:v('mq'),status:v('ms')||'Pendente'});sched();render();}
 
 // PATROCÍNIO
 function rPat(){
@@ -387,26 +408,27 @@ function rPat(){
     <button class="btn bpu" onclick="addPar()">+ Parceria</button>
   </div>`;
 }
-function addPar(){D.parcerias.push({empresa:v('pe'),modelo:v('pm'),valor:v('pv')});sched();render();}
+function addPar(){if(!unlocked)return;D.parcerias.push({empresa:v('pe'),modelo:v('pm'),valor:v('pv')});sched();render();}
 
 // CAMISAS
-function rCamisas(){
-  const rows=D.camisas.map((r,i)=>{
+function rCamisas(key='camisas'){
+  const list=D[key]||[];
+  const rows=list.map((r,i)=>{
     const p1=r.p1.toString().toLowerCase().includes('pendente');
     const p2=r.p2.toString().toLowerCase().includes('pendente');
     return `<tr>
-      <td contenteditable data-p="camisas.${i}.nome" style="font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:600">${r.nome}</td>
-      <td contenteditable data-p="camisas.${i}.preta" style="text-align:center">${r.preta}</td>
-      <td contenteditable data-p="camisas.${i}.branca" style="text-align:center">${r.branca}</td>
-      <td contenteditable data-p="camisas.${i}.p1" style="color:${p1?'var(--red)':'var(--green)'};font-weight:600">${r.p1}</td>
-      <td contenteditable data-p="camisas.${i}.p2" style="color:${p2?'var(--red)':r.p2?'var(--green)':'var(--muted)'};font-weight:600">${r.p2||'—'}</td>
-      <td contenteditable data-p="camisas.${i}.obs" style="font-size:11px;color:var(--muted)">${r.obs}</td>
-      <td><button class="btn brd" style="padding:2px 7px;font-size:11px" onclick="del('camisas',${i})">✕</button></td>
+      <td contenteditable data-p="${key}.${i}.nome" style="font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:600">${r.nome}</td>
+      <td contenteditable data-p="${key}.${i}.preta" style="text-align:center">${r.preta}</td>
+      <td contenteditable data-p="${key}.${i}.branca" style="text-align:center">${r.branca}</td>
+      <td contenteditable data-p="${key}.${i}.p1" style="color:${p1?'var(--red)':'var(--green)'};font-weight:600">${r.p1}</td>
+      <td contenteditable data-p="${key}.${i}.p2" style="color:${p2?'var(--red)':r.p2?'var(--green)':'var(--muted)'};font-weight:600">${r.p2||'—'}</td>
+      <td contenteditable data-p="${key}.${i}.obs" style="font-size:11px;color:var(--muted)">${r.obs}</td>
+      <td><button class="btn brd" style="padding:2px 7px;font-size:11px" onclick="del('${key}',${i})">✕</button></td>
     </tr>`;
   }).join('');
-  const pend=D.camisas.filter(r=>r.p1.toString().toLowerCase().includes('pendente')||r.p2.toString().toLowerCase().includes('pendente')).length;
+  const pend=list.filter(r=>r.p1.toString().toLowerCase().includes('pendente')||r.p2.toString().toLowerCase().includes('pendente')).length;
   return `<div class="cg">
-    <div class="card"><div class="cl">Total Pedidos</div><div class="cv">${D.camisas.length}</div></div>
+    <div class="card"><div class="cl">Total Pedidos</div><div class="cv">${list.length}</div></div>
     <div class="card"><div class="cl">Com Pendência</div><div class="cv" style="color:var(--red)">${pend}</div></div>
   </div>
   <div class="table-wrap"><table>
@@ -417,17 +439,35 @@ function rCamisas(){
     <input id="cn" placeholder="Nome"><input id="cpt" placeholder="Tam. Preta" style="max-width:80px">
     <input id="cbt" placeholder="Tam. Branca" style="max-width:80px"><input id="cp1" placeholder="1ª Parcela">
     <input id="cp2" placeholder="2ª Parcela"><input id="cob" placeholder="Obs">
-    <button class="btn bpu" onclick="addCamisa()">+ Pedido</button>
+    <button class="btn bpu" onclick="addCamisa('${key}')">+ Pedido</button>
   </div>`;
 }
-function addCamisa(){D.camisas.push({nome:v('cn'),preta:v('cpt'),branca:v('cbt'),p1:v('cp1'),p2:v('cp2'),obs:v('cob')});sched();render();}
+function addCamisa(key='camisas'){if(!unlocked)return;D[key].push({nome:v('cn'),preta:v('cpt'),branca:v('cbt'),p1:v('cp1'),p2:v('cp2'),obs:v('cob')});sched();render();}
 
 // UTILS
-function del(key,i){if(Array.isArray(D[key]))D[key].splice(i,1);sched();render();}
+function del(key,i){if(!unlocked)return;if(Array.isArray(D[key]))D[key].splice(i,1);sched();render();}
 function v(id){const el=document.getElementById(id);return el?el.value:'';}
 
+function toggleAdmin(){
+  if(unlocked){unlocked=false;sessionStorage.removeItem('cfc-admin');render();updateAdminBox();return;}
+  const senha=prompt('Senha da diretoria:');
+  if(senha==='diretoria026'){unlocked=true;sessionStorage.setItem('cfc-admin','1');render();updateAdminBox();}
+  else if(senha!==null) alert('Senha incorreta.');
+}
+function updateAdminBox(){
+  const b=document.getElementById('unlockBtn'); if(!b)return;
+  b.textContent=unlocked?'🔓 Edição liberada':'🔒 Diretoria';
+}
+function applyEditLock(){
+  document.querySelectorAll('[contenteditable]').forEach(el=>el.setAttribute('contenteditable',unlocked?'true':'false'));
+  document.querySelectorAll('#content input,#content select').forEach(el=>el.disabled=!unlocked);
+  document.querySelectorAll('#content .bpu,#content .brd').forEach(el=>el.style.display=unlocked?'':'none');
+  document.querySelectorAll('#content .badge[onclick]').forEach(el=>{el.style.pointerEvents=unlocked?'auto':'none';el.style.cursor=unlocked?'pointer':'default';});
+}
+
 function attachEd(){
-  document.querySelectorAll('[contenteditable]').forEach(el=>{
+  if(!unlocked)return;
+  document.querySelectorAll('[contenteditable=true]').forEach(el=>{
     el.addEventListener('blur',()=>{
       const path=el.dataset.p; if(!path)return;
       setP(D,path,el.innerText.trim()); sched();
