@@ -24,6 +24,8 @@ nav{flex:1;padding:12px 8px;display:flex;flex-direction:column;gap:2px;overflow-
 .nb{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .15s;border:none;background:none;text-align:left;width:100%}
 .nb:hover{background:var(--purple-glow);color:var(--white)}
 .nb.active{background:var(--purple-glow);color:var(--purple-light);border-left:2px solid var(--purple)}
+.nb.restricted{opacity:.38;cursor:not-allowed}
+.nb.restricted:hover{background:none;color:var(--muted)}
 .sfoot{padding:14px 16px;border-top:1px solid var(--border);font-size:10px;color:var(--muted);text-align:center}
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden}
 .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
@@ -225,6 +227,7 @@ function setSt(t){document.getElementById('sync').textContent=t;}
 
 document.getElementById('nav').addEventListener('click',e=>{
   const b=e.target.closest('.nb'); if(!b)return;
+  if(!unlocked && (b.dataset.tab==='caixa'||b.dataset.tab==='patrocinio')) return;
   document.querySelectorAll('.nb').forEach(x=>x.classList.remove('active'));
   b.classList.add('active');
   activeTab=b.dataset.tab;
@@ -414,42 +417,55 @@ function addPar(){if(!unlocked)return;D.parcerias.push({empresa:v('pe'),modelo:v
 function rCamisas(key='camisas'){
   const list=D[key]||[];
   const rows=list.map((r,i)=>{
-    const p1=r.p1.toString().toLowerCase().includes('pendente');
-    const p2=r.p2.toString().toLowerCase().includes('pendente');
+    const p1=(r.p1||'').toString().toLowerCase().includes('pendente');
+    const p2=(r.p2||'').toString().toLowerCase().includes('pendente');
+    const entregue=!!r.entregue;
+    if(!unlocked){
+      const tamanhos=[r.preta?`Preta: ${r.preta}`:'',r.branca?`Branca: ${r.branca}`:''].filter(Boolean).join(' • ')||'—';
+      return `<tr>
+        <td style="font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:600">${r.nome}</td>
+        <td style="text-align:center">${tamanhos}</td>
+        <td style="text-align:center;font-size:18px">${entregue?'☑':'☐'}</td>
+      </tr>`;
+    }
     return `<tr>
       <td contenteditable data-p="${key}.${i}.nome" style="font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:600">${r.nome}</td>
-      <td contenteditable data-p="${key}.${i}.preta" style="text-align:center">${r.preta}</td>
-      <td contenteditable data-p="${key}.${i}.branca" style="text-align:center">${r.branca}</td>
-      <td contenteditable data-p="${key}.${i}.p1" style="color:${p1?'var(--red)':'var(--green)'};font-weight:600">${r.p1}</td>
+      <td contenteditable data-p="${key}.${i}.preta" style="text-align:center">${r.preta||''}</td>
+      <td contenteditable data-p="${key}.${i}.branca" style="text-align:center">${r.branca||''}</td>
+      <td contenteditable data-p="${key}.${i}.p1" style="color:${p1?'var(--red)':'var(--green)'};font-weight:600">${r.p1||''}</td>
       <td contenteditable data-p="${key}.${i}.p2" style="color:${p2?'var(--red)':r.p2?'var(--green)':'var(--muted)'};font-weight:600">${r.p2||'—'}</td>
-      <td contenteditable data-p="${key}.${i}.obs" style="font-size:11px;color:var(--muted)">${r.obs}</td>
+      <td style="text-align:center"><button class="btn ${entregue?'bpu':''}" onclick="toggleEntregue('${key}',${i})" style="padding:4px 9px">${entregue?'☑ Entregue':'☐ Pendente'}</button></td>
       <td><button class="btn brd" style="padding:2px 7px;font-size:11px" onclick="del('${key}',${i})">✕</button></td>
     </tr>`;
   }).join('');
-  const pend=list.filter(r=>r.p1.toString().toLowerCase().includes('pendente')||r.p2.toString().toLowerCase().includes('pendente')).length;
+  const pend=list.filter(r=>(r.p1||'').toString().toLowerCase().includes('pendente')||(r.p2||'').toString().toLowerCase().includes('pendente')).length;
+  const entregues=list.filter(r=>r.entregue).length;
+  const adminCards=unlocked?`<div class="card"><div class="cl">Com Pendência</div><div class="cv" style="color:var(--red)">${pend}</div></div>`:'';
+  const head=unlocked?'<th>Nome</th><th>Preta</th><th>Branca</th><th>1ª Parc.</th><th>2ª Parc.</th><th>Entregue</th><th></th>':'<th>Nome</th><th>Tamanho pedido</th><th>Entregue</th>';
   return `<div class="cg">
     <div class="card"><div class="cl">Total Pedidos</div><div class="cv">${list.length}</div></div>
-    <div class="card"><div class="cl">Com Pendência</div><div class="cv" style="color:var(--red)">${pend}</div></div>
+    <div class="card"><div class="cl">Entregues</div><div class="cv">${entregues}</div></div>${adminCards}
   </div>
   <div class="table-wrap"><table>
-    <thead><tr><th>Nome</th><th>Preta</th><th>Branca</th><th>1ª Parc.</th><th>2ª Parc.</th><th>Obs</th><th></th></tr></thead>
+    <thead><tr>${head}</tr></thead>
     <tbody>${rows}</tbody>
   </table></div>
   <div class="add-row" style="margin-top:8px">
     <input id="cn" placeholder="Nome"><input id="cpt" placeholder="Tam. Preta" style="max-width:80px">
     <input id="cbt" placeholder="Tam. Branca" style="max-width:80px"><input id="cp1" placeholder="1ª Parcela">
-    <input id="cp2" placeholder="2ª Parcela"><input id="cob" placeholder="Obs">
+    <input id="cp2" placeholder="2ª Parcela">
     <button class="btn bpu" onclick="addCamisa('${key}')">+ Pedido</button>
   </div>`;
 }
-function addCamisa(key='camisas'){if(!unlocked)return;D[key].push({nome:v('cn'),preta:v('cpt'),branca:v('cbt'),p1:v('cp1'),p2:v('cp2'),obs:v('cob')});sched();render();}
+function addCamisa(key='camisas'){if(!unlocked)return;D[key].push({nome:v('cn'),preta:v('cpt'),branca:v('cbt'),p1:v('cp1'),p2:v('cp2'),obs:'',entregue:false});sched();render();}
+function toggleEntregue(key,i){if(!unlocked)return;D[key][i].entregue=!D[key][i].entregue;sched();render();}
 
 // UTILS
 function del(key,i){if(!unlocked)return;if(Array.isArray(D[key]))D[key].splice(i,1);sched();render();}
 function v(id){const el=document.getElementById(id);return el?el.value:'';}
 
 function toggleAdmin(){
-  if(unlocked){unlocked=false;sessionStorage.removeItem('cfc-admin');render();updateAdminBox();return;}
+  if(unlocked){unlocked=false;sessionStorage.removeItem('cfc-admin');if(activeTab==='caixa'||activeTab==='patrocinio'){activeTab='agenda';document.querySelectorAll('.nb').forEach(x=>x.classList.toggle('active',x.dataset.tab==='agenda'));document.getElementById('ptitle').textContent=PAGES.agenda.t;document.getElementById('psub').textContent=PAGES.agenda.s;}render();updateAdminBox();return;}
   const senha=prompt('Senha da diretoria:');
   if(senha==='diretoria026'){unlocked=true;sessionStorage.setItem('cfc-admin','1');render();updateAdminBox();}
   else if(senha!==null) alert('Senha incorreta.');
@@ -457,12 +473,15 @@ function toggleAdmin(){
 function updateAdminBox(){
   const b=document.getElementById('unlockBtn'); if(!b)return;
   b.textContent=unlocked?'🔓 Edição liberada':'🔒 Diretoria';
+  document.querySelectorAll('.nb[data-tab="caixa"],.nb[data-tab="patrocinio"]').forEach(el=>el.classList.toggle('restricted',!unlocked));
 }
 function applyEditLock(){
   document.querySelectorAll('[contenteditable]').forEach(el=>el.setAttribute('contenteditable',unlocked?'true':'false'));
   document.querySelectorAll('#content input,#content select').forEach(el=>el.disabled=!unlocked);
+  document.querySelectorAll('#content .add-row').forEach(el=>el.style.display=unlocked?'':'none');
   document.querySelectorAll('#content .bpu,#content .brd').forEach(el=>el.style.display=unlocked?'':'none');
   document.querySelectorAll('#content .badge[onclick]').forEach(el=>{el.style.pointerEvents=unlocked?'auto':'none';el.style.cursor=unlocked?'pointer':'default';});
+  document.querySelectorAll('.nb[data-tab="caixa"],.nb[data-tab="patrocinio"]').forEach(el=>el.classList.toggle('restricted',!unlocked));
 }
 
 function attachEd(){
