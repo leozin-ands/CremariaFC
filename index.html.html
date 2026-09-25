@@ -247,18 +247,30 @@ function render(){
 }
 
 // AGENDA
+function classificaResultado(resultado){
+  if(!resultado)return null;
+  const m=String(resultado).trim().match(/^(\d+)\s*(?:\((\d+)\))?\s*[xX]\s*(?:\((\d+)\))?\s*(\d+)$/);
+  if(!m)return null;
+  const golsCremaria=parseInt(m[1]), golsAdversario=parseInt(m[4]);
+  const penCremaria=m[2]!==undefined?parseInt(m[2]):null;
+  const penAdversario=m[3]!==undefined?parseInt(m[3]):null;
+  if(golsCremaria>golsAdversario)return 'V';
+  if(golsCremaria<golsAdversario)return 'D';
+  if(penCremaria!==null&&penAdversario!==null){
+    if(penCremaria>penAdversario)return 'V';
+    if(penCremaria<penAdversario)return 'D';
+  }
+  return 'E';
+}
 function rAgenda(){
   let v=0,d=0,e=0;
   D.agenda.forEach(r=>{
-    if(!r.resultado)return;
-    const p=r.resultado.replace(/[()\s]/g,'').split(/[xX]/);
-    const a=parseInt(p[0]),b=parseInt(p[p.length-1]);
-    if(!isNaN(a)&&!isNaN(b)){if(a>b)v++;else if(a<b)d++;else e++;}
+    const status=classificaResultado(r.resultado);
+    if(status==='V')v++; else if(status==='D')d++; else if(status==='E')e++;
   });
   const rows=D.agenda.map((r,i)=>{
-    const p=r.resultado?r.resultado.replace(/[()\s]/g,'').split(/[xX]/):'';
-    const a=p?parseInt(p[0]):NaN, b=p?parseInt(p[p.length-1]):NaN;
-    const badge=!isNaN(a)&&!isNaN(b)?(a>b?'<span class="badge bg">V</span>':a<b?'<span class="badge br">D</span>':'<span class="badge by">E</span>'):'';
+    const status=classificaResultado(r.resultado);
+    const badge=status==='V'?'<span class="badge bg">V</span>':status==='D'?'<span class="badge br">D</span>':status==='E'?'<span class="badge by">E</span>':'';
     return `<tr>
       <td contenteditable data-p="agenda.${i}.data">${r.data}</td>
       <td contenteditable data-p="agenda.${i}.campo" style="color:var(--muted);font-size:12px">${r.campo}</td>
@@ -313,20 +325,44 @@ function addEl(pos){if(!unlocked)return;const x=v('ne-'+pos);if(!x)return;D.elen
 function delEl(pos,i){if(!unlocked)return;D.elenco[pos].splice(i,1);sched();render();}
 
 // CAIXA
+function parseMoney(v){
+  let s=String(v??'').trim().replace(/R\$/gi,'').replace(/\s/g,'');
+  if(!s)return 0;
+  if(s.includes(',')&&s.includes('.')) s=s.replace(/\./g,'').replace(',','.');
+  else if(s.includes(',')) s=s.replace(',','.');
+  const n=parseFloat(s.replace(/[^0-9+\-.]/g,''));
+  return isNaN(n)?0:n;
+}
+function fmtMoney(n){
+  return Number(n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function recalcCaixa(key){
+  const entries=D[key]||[];
+  if(!entries.length)return;
+  // Preserva eventual saldo anterior ao primeiro lançamento já existente.
+  let saldoInicial=0;
+  if(entries[0].saldo!==undefined&&entries[0].saldo!=='') saldoInicial=parseMoney(entries[0].saldo)-parseMoney(entries[0].valor);
+  let saldo=saldoInicial;
+  entries.forEach(r=>{
+    saldo+=parseMoney(r.valor);
+    r.saldo=fmtMoney(saldo);
+  });
+}
 function rCaixa(key){
+  recalcCaixa(key);
   const rows=(D[key]||[]).map((r,i)=>{
-    const num=parseFloat(r.valor.toString().replace(',','.'));
-    const vc=!isNaN(num)&&num<0?'color:var(--red)':'color:var(--green)';
+    const num=parseMoney(r.valor);
+    const vc=num<0?'color:var(--red)':'color:var(--green)';
     return `<tr>
       <td contenteditable data-p="${key}.${i}.data">${r.data}</td>
       <td contenteditable data-p="${key}.${i}.desc">${r.desc}</td>
-      <td contenteditable data-p="${key}.${i}.valor" style="${vc};font-family:'Rajdhani',sans-serif;font-weight:700">${r.valor}</td>
-      <td contenteditable data-p="${key}.${i}.saldo" style="font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--purple-light)">${r.saldo}</td>
+      <td contenteditable data-p="${key}.${i}.valor" data-caixa-key="${key}" style="${vc};font-family:'Rajdhani',sans-serif;font-weight:700">${r.valor}</td>
+      <td style="font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--purple-light)">${r.saldo}</td>
       <td contenteditable data-p="${key}.${i}.obs" style="font-size:11px;color:var(--muted)">${r.obs}</td>
       <td><button class="btn brd" style="padding:2px 7px;font-size:11px" onclick="del('${key}',${i})">✕</button></td>
     </tr>`;
   }).join('');
-  const entries=D[key]||[], last=entries.length?entries[entries.length-1].saldo:'0';
+  const entries=D[key]||[], last=entries.length?entries[entries.length-1].saldo:'0,00';
   return `<div class="cg">
     <div class="card"><div class="cl">Saldo Atual</div><div class="cv">R$ ${last}</div></div>
     <div class="card"><div class="cl">Lançamentos</div><div class="cv">${entries.length}</div></div>
@@ -337,14 +373,14 @@ function rCaixa(key){
   </table></div>
   <div class="add-row">
     <input id="cd" placeholder="Data"><input id="cs" placeholder="Descritivo">
-    <input id="cv" placeholder="Valor (ex: -250)"><input id="csl" placeholder="Saldo total"><input id="co" placeholder="Obs">
+    <input id="cv" placeholder="Valor (ex: 250 ou -250)"><input id="co" placeholder="Obs">
     <button class="btn bpu" onclick="addCaixa('${key}')">+ Lançamento</button>
   </div>`;
 }
 function addCaixa(key){if(!unlocked)return;
   if(!D[key])D[key]=[];
-  D[key].push({data:v('cd'),desc:v('cs'),valor:v('cv'),saldo:v('csl'),obs:v('co')});
-  sched();render();
+  D[key].push({data:v('cd'),desc:v('cs'),valor:v('cv'),saldo:'',obs:v('co')});
+  recalcCaixa(key); sched();render();
 }
 
 // MATERIAL
@@ -489,7 +525,7 @@ function attachEd(){
   document.querySelectorAll('[contenteditable=true]').forEach(el=>{
     el.addEventListener('blur',()=>{
       const path=el.dataset.p; if(!path)return;
-      setP(D,path,el.innerText.trim()); sched();
+      setP(D,path,el.innerText.trim()); if(el.dataset.caixaKey){recalcCaixa(el.dataset.caixaKey); sched(); render(); return;} sched();
     });
     el.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();el.blur();}});
   });
