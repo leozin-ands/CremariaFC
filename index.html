@@ -482,6 +482,52 @@ nav{flex:none;padding:0;display:flex;flex-direction:row;align-items:center;gap:4
   }
 }
 
+
+/* Caixa: entradas e saídas */
+.valor-pos{color:#38d47a !important;font-weight:800}
+.valor-neg{color:#ff5c68 !important;font-weight:800}
+.valor-zero{color:var(--muted) !important}
+
+/* Cremaria FC — galeria pública */
+.gallery-upload{margin-bottom:18px}
+.gallery-hint{margin-top:8px;color:var(--muted);font-size:11px}
+.gallery-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+  gap:16px;
+}
+.gallery-card{
+  overflow:hidden;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:var(--card);
+}
+.gallery-card>img{
+  display:block;
+  width:100%;
+  aspect-ratio:4/3;
+  object-fit:cover;
+  background:#090909;
+}
+.gallery-caption{
+  padding:12px 14px;
+  color:var(--text);
+  font-size:14px;
+  line-height:1.4;
+  text-align:center;
+}
+.gallery-actions{padding:0 12px 12px;text-align:center}
+.empty-gallery{
+  padding:36px 16px;
+  border:1px dashed var(--border);
+  border-radius:12px;
+  color:var(--muted);
+  text-align:center;
+}
+@media(max-width:650px){
+  .gallery-grid{grid-template-columns:1fr}
+}
+
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap" rel="stylesheet">
 </head>
@@ -497,7 +543,8 @@ nav{flex:none;padding:0;display:flex;flex-direction:row;align-items:center;gap:4
     <span>leobentivoglio@hotmail.com</span>
   </div>
   <nav id="nav">
-    <button class="nb active" data-tab="agenda"><span>🗓</span> Agenda</button>
+    <button class="nb active" data-tab="cremaria"><span>⚽</span> Cremaria FC</button>
+    <button class="nb" data-tab="agenda"><span>🗓</span> Agenda</button>
     <button class="nb" data-tab="elenco"><span>👥</span> Elenco</button>
     <button class="nb" data-tab="camisas26"><span>👕</span> Camisas Torcida 2026</button>
     <details class="admin-group admin-only" id="adminMenu"><summary>🔐 Diretoria ▾</summary><div class="admin-menu-items">
@@ -512,8 +559,8 @@ nav{flex:none;padding:0;display:flex;flex-direction:row;align-items:center;gap:4
 <main class="main">
   <div class="topbar">
     <div>
-      <div class="pt" id="ptitle">Agenda</div>
-      <div class="ps" id="psub">Jogos e resultados do CFC</div>
+      <div class="pt" id="ptitle">Cremaria FC</div>
+      <div class="ps" id="psub">Fotos e momentos do clube</div>
     </div>
     <div class="auth-wrap">
       <div class="auth-badge">
@@ -619,6 +666,7 @@ camisas26:[],
 };
 
 const PAGES={
+  cremaria:{t:'Cremaria FC',s:'Fotos e momentos do clube'},
   agenda:{t:'Agenda',s:'Jogos e resultados do CFC'},
   elenco:{t:'Elenco',s:'Controle de elenco e presença'},
   caixa:{t:'Caixa',s:'Movimentações financeiras do clube'},
@@ -629,16 +677,18 @@ const PAGES={
 };
 
 const ADMIN_PASS='diretoria026';
-let isAdmin=false, D=null, activeTab='agenda', saveTimer=null, pedidoConfirmado=false;
+let isAdmin=false, D=null, activeTab='cremaria', saveTimer=null, pedidoConfirmado=false;
 
 // ── FIREBASE: carrega dados em tempo real ────────────────────────────────────
 _db.ref('cfc/v3').on('value', snap=>{
   const val=snap.val();
   if(val){
     D=val;
+    if(!D.galeria)D.galeria=[];
   } else {
     // Primeira vez: salva o seed
     D=JSON.parse(JSON.stringify(SEED));
+    if(!D.galeria)D.galeria=[];
     _db.ref('cfc/v3').set(D);
   }
   setSt('✦ Sincronizado');
@@ -676,7 +726,7 @@ function applyEditMode(){
     el.contentEditable=isAdmin?'true':'false';
     el.classList.toggle('editable-on',isAdmin);
   });
-  document.querySelectorAll('.admin-only').forEach(el=>{el.style.display=isAdmin?'':'none';}); if(!isAdmin&&['caixa','material','patrocinio','camisas'].includes(activeTab)){activeTab='agenda';document.querySelectorAll('.nb').forEach(x=>x.classList.toggle('active',x.dataset.tab==='agenda'));document.getElementById('ptitle').textContent=PAGES.agenda.t;document.getElementById('psub').textContent=PAGES.agenda.s;render();}
+  document.querySelectorAll('.admin-only').forEach(el=>{el.style.display=isAdmin?'':'none';}); if(!isAdmin&&['caixa','material','patrocinio','camisas'].includes(activeTab)){activeTab='cremaria';document.querySelectorAll('.nb').forEach(x=>x.classList.toggle('active',x.dataset.tab==='cremaria'));document.getElementById('ptitle').textContent=PAGES.cremaria.t;document.getElementById('psub').textContent=PAGES.cremaria.s;render();}
 }
 
 // ── NAV ───────────────────────────────────────────────────────────────────────
@@ -694,10 +744,48 @@ document.getElementById('nav').addEventListener('click',e=>{
 function render(){
   const c=document.getElementById('content');
   if(!D){c.innerHTML='<div class="loading"><div class="spin"></div>Carregando...</div>';return;}
-  const m={agenda:rAgenda,elenco:rElenco,caixa:rCaixa,material:rMaterial,patrocinio:rPat,camisas:rCamisas,camisas26:rCamisas26};
-  c.innerHTML=(m[activeTab]||rAgenda)();
+  const m={cremaria:rCremaria,agenda:rAgenda,elenco:rElenco,caixa:rCaixa,material:rMaterial,patrocinio:rPat,camisas:rCamisas,camisas26:rCamisas26};
+  c.innerHTML=(m[activeTab]||rCremaria)();
   applyEditMode();
   attachEd();
+}
+
+
+// ── CREMARIA FC / GALERIA ────────────────────────────────────────────────────
+function rCremaria(){
+  const fotos=(D.galeria||[]).map((r,i)=>({r,i})).reverse();
+  const cards=fotos.map(({r,i})=>`<article class="gallery-card">
+    <img src="${r.foto}" alt="${(r.legenda||'Foto do Cremaria FC').replace(/"/g,'&quot;')}" loading="lazy">
+    ${r.legenda?`<div class="gallery-caption">${r.legenda}</div>`:''}
+    <div class="gallery-actions admin-only"><button class="btn brd" onclick="delFoto(${i})">✕ Remover</button></div>
+  </article>`).join('');
+  return `<div class="entry-box admin-only gallery-upload">
+    <div class="stitle">Adicionar foto</div>
+    <div class="add-row">
+      <input id="gal-foto" type="file" accept="image/*">
+      <input id="gal-legenda" placeholder="Legenda da foto">
+      <button class="btn bpu" onclick="addFoto()">+ Publicar foto</button>
+    </div>
+    <div class="gallery-hint">A foto ficará disponível para todos os visitantes do site.</div>
+  </div>
+  ${cards?`<div class="gallery-grid">${cards}</div>`:`<div class="empty-gallery">Ainda não há fotos publicadas.</div>`}`;
+}
+function addFoto(){
+  if(!isAdmin)return;
+  const input=document.getElementById('gal-foto'),file=input&&input.files&&input.files[0];
+  if(!file){alert('Escolha uma foto.');return}
+  if(file.size>3500000){alert('Escolha uma imagem de até 3,5 MB.');return}
+  const reader=new FileReader();
+  reader.onload=()=>{
+    if(!D.galeria)D.galeria=[];
+    D.galeria.push({foto:reader.result,legenda:v('gal-legenda').trim(),criadoEm:Date.now()});
+    save();render();
+  };
+  reader.readAsDataURL(file);
+}
+function delFoto(i){
+  if(!isAdmin||!confirm('Remover esta foto?'))return;
+  D.galeria.splice(i,1);save();render();
 }
 
 // ── AGENDA ────────────────────────────────────────────────────────────────────
@@ -736,7 +824,7 @@ function delEl(pos,i){if(!isAdmin)return;D.elenco[pos].splice(i,1);sched();rende
 function parseMoney(v){let x=String(v??'').replace(/R\$/g,'').replace(/\s/g,'');if(x.includes(',')&&x.includes('.'))x=x.replace(/\./g,'').replace(',','.');else x=x.replace(',','.');return parseFloat(x)||0}
 function fmtMoney(n){return Number(n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function recalcCaixa(){const a=D.caixa||[];if(!a.length)return;let saldo=parseMoney(a[0].saldo)-parseMoney(a[0].valor);a.forEach(r=>{saldo+=parseMoney(r.valor);r.saldo=fmtMoney(saldo)})}
-function rCaixa(){recalcCaixa();const ord=(D.caixa||[]).map((r,i)=>({r,i})).sort((a,b)=>parseDateBR(b.r.data)-parseDateBR(a.r.data)||b.i-a.i);const rows=ord.map(({r,i})=>`<tr><td contenteditable data-p="caixa.${i}.data">${r.data}</td><td contenteditable data-p="caixa.${i}.desc">${r.desc}</td><td contenteditable data-p="caixa.${i}.valor">${r.valor}</td><td style="color:var(--purple-light);font-weight:700">${r.saldo}</td><td contenteditable data-p="caixa.${i}.obs">${r.obs||''}</td><td class="admin-only"><button class="btn brd" onclick="del('caixa',${i})">✕</button></td></tr>`).join('');const a=D.caixa||[],last=a.length?a[a.length-1].saldo:'0,00';return `<div class="cg"><div class="card"><div class="cl">Saldo Atual</div><div class="cv">R$ ${last}</div></div></div><div class="entry-box admin-only"><div class="stitle">Novo lançamento</div><div class="add-row"><input id="cd" placeholder="Data"><input id="cds" placeholder="Descritivo"><input id="cvl" placeholder="Valor (+ entrada / - saída)"><input id="co" placeholder="Obs"><button class="btn bpu" onclick="addCaixa()">+ Lançamento</button></div></div><div class="table-wrap"><table><thead><tr><th>Data</th><th>Descritivo</th><th>Valor</th><th>Saldo</th><th>Obs</th><th class="admin-only"></th></tr></thead><tbody>${rows}</tbody></table></div>`}
+function rCaixa(){recalcCaixa();const ord=(D.caixa||[]).map((r,i)=>({r,i})).sort((a,b)=>parseDateBR(b.r.data)-parseDateBR(a.r.data)||b.i-a.i);const rows=ord.map(({r,i})=>`<tr><td contenteditable data-p="caixa.${i}.data">${r.data}</td><td contenteditable data-p="caixa.${i}.desc">${r.desc}</td><td contenteditable data-p="caixa.${i}.valor" class="${parseMoney(r.valor)>0?'valor-pos':parseMoney(r.valor)<0?'valor-neg':'valor-zero'}">${r.valor}</td><td style="color:var(--purple-light);font-weight:700">${r.saldo}</td><td contenteditable data-p="caixa.${i}.obs">${r.obs||''}</td><td class="admin-only"><button class="btn brd" onclick="del('caixa',${i})">✕</button></td></tr>`).join('');const a=D.caixa||[],last=a.length?a[a.length-1].saldo:'0,00';return `<div class="cg"><div class="card"><div class="cl">Saldo Atual</div><div class="cv">R$ ${last}</div></div></div><div class="entry-box admin-only"><div class="stitle">Novo lançamento</div><div class="add-row"><input id="cd" placeholder="Data"><input id="cds" placeholder="Descritivo"><input id="cvl" placeholder="Valor (+ entrada / - saída)"><input id="co" placeholder="Obs"><button class="btn bpu" onclick="addCaixa()">+ Lançamento</button></div></div><div class="table-wrap"><table><thead><tr><th>Data</th><th>Descritivo</th><th>Valor</th><th>Saldo</th><th>Obs</th><th class="admin-only"></th></tr></thead><tbody>${rows}</tbody></table></div>`}
 function addCaixa(){if(!isAdmin)return;if(!D.caixa)D.caixa=[];D.caixa.push({data:v('cd'),desc:v('cds'),valor:v('cvl'),saldo:'0',obs:v('co')});recalcCaixa();sched();render()}
 
 // ── MATERIAL ──────────────────────────────────────────────────────────────────
