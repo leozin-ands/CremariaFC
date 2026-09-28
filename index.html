@@ -607,6 +607,16 @@ body.cremaria-page .empty-gallery{
   }
 }
 
+
+.gallery-move{
+  min-width:38px;
+  font-size:18px !important;
+  font-weight:900;
+  color:var(--purple-light) !important;
+  border-color:var(--purple-mid) !important;
+}
+.gallery-move:hover{background:var(--purple-glow) !important}
+
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap" rel="stylesheet">
 </head>
@@ -841,6 +851,8 @@ function rCremaria(){
     <img src="${r.foto}" alt="${escHtml(r.legenda||'Foto do Cremaria FC')}" loading="lazy" onclick="openFoto(${i})" title="Clique para ampliar">
     ${r.legenda?`<div class="gallery-caption">${escHtml(r.legenda).replace(/\n/g,'<br>')}</div>`:''}
     <div class="gallery-actions admin-only">
+      <button class="btn gallery-move" onclick="moveFoto(${i},1)" title="Mover para a esquerda">←</button>
+      <button class="btn gallery-move" onclick="moveFoto(${i},-1)" title="Mover para a direita">→</button>
       <button class="btn bpu" onclick="editLegenda(${i})">✎ Editar legenda</button>
       <button class="btn brd" onclick="delFoto(${i})">✕ Remover</button>
     </div>
@@ -873,6 +885,13 @@ function addFoto(){
     save();render();
   };
   reader.readAsDataURL(file);
+}
+function moveFoto(i,dir){
+  if(!isAdmin||!D.galeria)return;
+  const j=i+dir;
+  if(j<0||j>=D.galeria.length)return;
+  [D.galeria[i],D.galeria[j]]=[D.galeria[j],D.galeria[i]];
+  save();render();
 }
 function editLegenda(i){
   if(!isAdmin)return;
