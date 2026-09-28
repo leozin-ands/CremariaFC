@@ -528,6 +528,59 @@ nav{flex:none;padding:0;display:flex;flex-direction:row;align-items:center;gap:4
   .gallery-grid{grid-template-columns:1fr}
 }
 
+
+/* Galeria: legendas multilinha, edição e lightbox */
+.gallery-add-fields{display:grid;grid-template-columns:minmax(220px,.8fr) minmax(300px,1.5fr) auto;gap:8px;align-items:stretch}
+.gallery-add-fields textarea,
+.caption-editor textarea{
+  width:100%;
+  resize:vertical;
+  min-height:88px;
+  padding:10px 12px;
+  border:1px solid var(--border);
+  border-radius:7px;
+  background:var(--surface2);
+  color:var(--text);
+  font:inherit;
+  line-height:1.4;
+}
+.gallery-card>img{cursor:zoom-in}
+.gallery-caption{white-space:normal}
+.gallery-actions{display:flex;justify-content:center;gap:7px;flex-wrap:wrap}
+.photo-modal{
+  position:fixed;inset:0;z-index:9999;
+  display:none;align-items:center;justify-content:center;flex-direction:column;
+  padding:24px;background:rgba(0,0,0,.92);
+}
+.photo-modal.open{display:flex}
+.photo-modal img{
+  display:block;max-width:min(94vw,1400px);max-height:82vh;
+  width:auto;height:auto;object-fit:contain;border-radius:8px;
+}
+.photo-modal-caption{
+  max-width:min(90vw,1000px);margin-top:12px;padding:8px 14px;
+  color:#fff;text-align:center;line-height:1.45;font-size:15px;
+}
+.photo-modal-close{
+  position:fixed;top:14px;right:18px;border:0;background:transparent;
+  color:#fff;font-size:38px;line-height:1;cursor:pointer;z-index:10000;
+}
+body.modal-open{overflow:hidden}
+.caption-editor{
+  position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,.82);
+  display:flex;align-items:center;justify-content:center;padding:18px;
+}
+.caption-editor-box{
+  width:min(620px,94vw);padding:18px;border:1px solid var(--purple);
+  border-radius:12px;background:var(--surface);
+}
+.caption-editor-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
+@media(max-width:750px){
+  .gallery-add-fields{grid-template-columns:1fr}
+  .photo-modal{padding:12px}
+  .photo-modal img{max-width:96vw;max-height:78vh}
+}
+
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap" rel="stylesheet">
 </head>
@@ -752,23 +805,34 @@ function render(){
 
 
 // ── CREMARIA FC / GALERIA ────────────────────────────────────────────────────
+function escHtml(s){
+  return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
 function rCremaria(){
   const fotos=(D.galeria||[]).map((r,i)=>({r,i})).reverse();
   const cards=fotos.map(({r,i})=>`<article class="gallery-card">
-    <img src="${r.foto}" alt="${(r.legenda||'Foto do Cremaria FC').replace(/"/g,'&quot;')}" loading="lazy">
-    ${r.legenda?`<div class="gallery-caption">${r.legenda}</div>`:''}
-    <div class="gallery-actions admin-only"><button class="btn brd" onclick="delFoto(${i})">✕ Remover</button></div>
+    <img src="${r.foto}" alt="${escHtml(r.legenda||'Foto do Cremaria FC')}" loading="lazy" onclick="openFoto(${i})" title="Clique para ampliar">
+    ${r.legenda?`<div class="gallery-caption">${escHtml(r.legenda).replace(/\n/g,'<br>')}</div>`:''}
+    <div class="gallery-actions admin-only">
+      <button class="btn bpu" onclick="editLegenda(${i})">✎ Editar legenda</button>
+      <button class="btn brd" onclick="delFoto(${i})">✕ Remover</button>
+    </div>
   </article>`).join('');
   return `<div class="entry-box admin-only gallery-upload">
     <div class="stitle">Adicionar foto</div>
-    <div class="add-row">
+    <div class="gallery-add-fields">
       <input id="gal-foto" type="file" accept="image/*">
-      <input id="gal-legenda" placeholder="Legenda da foto">
+      <textarea id="gal-legenda" rows="4" placeholder="Legenda da foto&#10;Você pode pular linhas normalmente."></textarea>
       <button class="btn bpu" onclick="addFoto()">+ Publicar foto</button>
     </div>
     <div class="gallery-hint">A foto ficará disponível para todos os visitantes do site.</div>
   </div>
-  ${cards?`<div class="gallery-grid">${cards}</div>`:`<div class="empty-gallery">Ainda não há fotos publicadas.</div>`}`;
+  ${cards?`<div class="gallery-grid">${cards}</div>`:`<div class="empty-gallery">Ainda não há fotos publicadas.</div>`}
+  <div id="photo-modal" class="photo-modal" onclick="closeFoto(event)">
+    <button class="photo-modal-close" onclick="closeFoto(event,true)" aria-label="Fechar">×</button>
+    <img id="photo-modal-img" src="" alt="Foto ampliada">
+    <div id="photo-modal-caption" class="photo-modal-caption"></div>
+  </div>`;
 }
 function addFoto(){
   if(!isAdmin)return;
@@ -782,6 +846,45 @@ function addFoto(){
     save();render();
   };
   reader.readAsDataURL(file);
+}
+function editLegenda(i){
+  if(!isAdmin)return;
+  const atual=(D.galeria[i]&&D.galeria[i].legenda)||'';
+  const overlay=document.createElement('div');
+  overlay.className='caption-editor';
+  overlay.innerHTML=`<div class="caption-editor-box">
+    <div class="stitle">Editar legenda</div>
+    <textarea rows="7" id="caption-edit-text">${escHtml(atual)}</textarea>
+    <div class="caption-editor-actions">
+      <button class="btn" onclick="this.closest('.caption-editor').remove()">Cancelar</button>
+      <button class="btn bpu" id="caption-save-btn">Salvar legenda</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  const ta=overlay.querySelector('#caption-edit-text');
+  ta.focus();
+  overlay.querySelector('#caption-save-btn').onclick=()=>{
+    D.galeria[i].legenda=ta.value.trim();
+    save();overlay.remove();render();
+  };
+}
+function openFoto(i){
+  const r=D.galeria[i];if(!r)return;
+  const modal=document.getElementById('photo-modal');
+  document.getElementById('photo-modal-img').src=r.foto;
+  const cap=document.getElementById('photo-modal-caption');
+  cap.innerHTML=escHtml(r.legenda||'').replace(/\n/g,'<br>');
+  cap.style.display=r.legenda?'block':'none';
+  modal.classList.add('open');
+  document.body.classList.add('modal-open');
+}
+function closeFoto(e,force){
+  const modal=document.getElementById('photo-modal');
+  if(!modal)return;
+  if(force || e.target===modal){
+    modal.classList.remove('open');
+    document.body.classList.remove('modal-open');
+  }
 }
 function delFoto(i){
   if(!isAdmin||!confirm('Remover esta foto?'))return;
