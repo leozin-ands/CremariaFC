@@ -232,7 +232,58 @@ nav{flex:none;padding:0;display:flex;flex-direction:row;align-items:center;gap:4
   }
 }
 
+
+/* Confirmação simplificada — estética grafite/pixo */
+.order-confirmation{
+  min-height:0 !important;
+  margin:0 0 18px !important;
+  padding:22px 24px !important;
+  border:none !important;
+  border-radius:10px !important;
+  background:#4b2c7f !important;
+  box-shadow:0 8px 22px rgba(0,0,0,.25) !important;
+  display:flex !important;
+  align-items:stretch !important;
+  gap:18px !important;
+  overflow:hidden !important;
+}
+.order-confirmation::after{display:none !important}
+.order-confirmation img{
+  width:108px !important;
+  height:108px !important;
+  flex:0 0 108px !important;
+  align-self:center !important;
+  object-fit:contain !important;
+  border-radius:50% !important;
+}
+.order-confirmation-text{
+  flex:1 !important;
+  min-width:0 !important;
+  display:flex !important;
+  flex-direction:column !important;
+  justify-content:center !important;
+  color:#fff !important;
+  text-transform:uppercase !important;
+  font-family:'Black Ops One','Impact','Arial Black',sans-serif !important;
+  font-size:clamp(22px,3vw,42px) !important;
+  line-height:1.02 !important;
+  letter-spacing:.2px !important;
+  font-weight:900 !important;
+  text-align:left !important;
+}
+.order-confirmation-text strong{
+  display:block !important;
+  font:inherit !important;
+  margin-bottom:.2em !important;
+}
+@media(max-width:650px){
+  .order-confirmation{padding:16px !important;gap:12px !important}
+  .order-confirmation img{width:72px !important;height:72px !important;flex-basis:72px !important}
+  .order-confirmation-text{font-size:clamp(17px,5vw,26px) !important}
+}
+
 </style>
+<link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap" rel="stylesheet">
 </head>
 <body>
 <div class="app">
