@@ -716,6 +716,21 @@ body.cremaria-page .empty-gallery{
 .sidebar>.logo-wrap{grid-column:2 !important;justify-self:center !important}
 @media(max-width:800px){.sidebar{grid-template-columns:1fr auto 1fr !important}}
 
+
+/* Cores por tipo de jogo na Agenda */
+table tbody tr.agenda-amistoso > td{
+  background:rgba(128,72,210,.28) !important;
+}
+table tbody tr.agenda-festival > td{
+  background:rgba(35,120,220,.28) !important;
+}
+table tbody tr.agenda-copa > td{
+  background:rgba(235,190,45,.30) !important;
+}
+table tbody tr.agenda-amistoso:hover > td{background:rgba(128,72,210,.40) !important}
+table tbody tr.agenda-festival:hover > td{background:rgba(35,120,220,.40) !important}
+table tbody tr.agenda-copa:hover > td{background:rgba(235,190,45,.42) !important}
+
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap" rel="stylesheet">
 </head>
@@ -1042,7 +1057,7 @@ function parseDateBR(x){const m=(x||'').match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);r
 function rAgenda(){
  let vt=0,dt=0,et=0;(D.agenda||[]).forEach(r=>{const c=classificaResultado(r.resultado);if(c==='V')vt++;else if(c==='D')dt++;else if(c==='E')et++});
  const ord=(D.agenda||[]).map((r,i)=>({r,i})).sort((a,b)=>parseDateBR(b.r.data)-parseDateBR(a.r.data));
- const rows=ord.map(({r,i})=>{const c=classificaResultado(r.resultado),badge=c==='V'?'<span class="badge bg">V</span>':c==='D'?'<span class="badge br">D</span>':c==='E'?'<span class="badge by">E</span>':'';return `<tr><td contenteditable data-p="agenda.${i}.data">${r.data}</td><td contenteditable data-p="agenda.${i}.campo" style="color:var(--muted);font-size:12px">${r.campo}</td><td contenteditable data-p="agenda.${i}.adversario" style="font-family:'Rajdhani',sans-serif;font-weight:600;font-size:14px">${r.adversario}</td><td contenteditable data-p="agenda.${i}.campeonato" style="font-size:12px;color:var(--muted)">${r.campeonato}</td><td contenteditable data-p="agenda.${i}.resultado" style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:15px">${r.resultado||'—'}</td><td>${badge}</td><td contenteditable data-p="agenda.${i}.obs" style="font-size:11px;color:var(--muted)">${r.obs}</td><td class="admin-only"><button class="btn brd" onclick="del('agenda',${i})">✕</button></td></tr>`}).join('');
+ const rows=ord.map(({r,i})=>{const c=classificaResultado(r.resultado),badge=c==='V'?'<span class="badge bg">V</span>':c==='D'?'<span class="badge br">D</span>':c==='E'?'<span class="badge by">E</span>':'';const tipo=String(r.campeonato||'').toLowerCase(),rowClass=tipo.includes('amistoso')?'agenda-amistoso':tipo.includes('festival')?'agenda-festival':tipo.includes('copa')?'agenda-copa':'';return `<tr class="${rowClass}"><td contenteditable data-p="agenda.${i}.data">${r.data}</td><td contenteditable data-p="agenda.${i}.campo" style="color:var(--muted);font-size:12px">${r.campo}</td><td contenteditable data-p="agenda.${i}.adversario" style="font-family:'Rajdhani',sans-serif;font-weight:600;font-size:14px">${r.adversario}</td><td contenteditable data-p="agenda.${i}.campeonato" style="font-size:12px;color:var(--muted)">${r.campeonato}</td><td contenteditable data-p="agenda.${i}.resultado" style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:15px">${r.resultado||'—'}</td><td>${badge}</td><td contenteditable data-p="agenda.${i}.obs" style="font-size:11px;color:var(--muted)">${r.obs}</td><td class="admin-only"><button class="btn brd" onclick="del('agenda',${i})">✕</button></td></tr>`}).join('');
  return `<div class="cg"><div class="card"><div class="cl">Jogos</div><div class="cv">${(D.agenda||[]).length}</div></div><div class="card"><div class="cl">Vitórias</div><div class="cv" style="color:var(--green)">${vt}</div></div><div class="card"><div class="cl">Empates</div><div class="cv" style="color:var(--yellow)">${et}</div></div><div class="card"><div class="cl">Derrotas</div><div class="cv" style="color:var(--red)">${dt}</div></div></div><div class="entry-box admin-only"><div class="stitle">Novo jogo</div><div class="add-row"><input id="ad" placeholder="Data"><input id="ac" placeholder="Campo"><input id="aa" placeholder="Adversário"><input id="ap" placeholder="Campeonato"><input id="ar" placeholder="Resultado"><input id="ao" placeholder="Gols / Obs"><button class="btn bpu" onclick="addAgenda()">+ Jogo</button></div></div><div class="table-wrap"><table><thead><tr><th>Data</th><th>Campo</th><th>Adversário</th><th>Campeonato</th><th>Resultado</th><th></th><th>Gols / Obs</th><th class="admin-only"></th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 function addAgenda(){
