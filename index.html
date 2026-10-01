@@ -731,6 +731,40 @@ table tbody tr.agenda-amistoso:hover > td{background:rgba(128,72,210,.40) !impor
 table tbody tr.agenda-festival:hover > td{background:rgba(35,120,220,.40) !important}
 table tbody tr.agenda-copa:hover > td{background:rgba(235,190,45,.42) !important}
 
+
+/* Filtros da Agenda */
+.agenda-filtros{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  overflow-x:auto;
+  padding:2px 0 12px;
+  margin-bottom:2px;
+}
+.agenda-filter{
+  appearance:none;
+  border:1px solid var(--border);
+  background:var(--surface2);
+  color:var(--muted);
+  border-radius:8px;
+  padding:8px 16px;
+  font-family:'Rajdhani',sans-serif;
+  font-size:13px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.agenda-filter:hover{color:#fff;border-color:var(--purple-mid)}
+.agenda-filter.active{
+  color:#fff;
+  background:var(--purple);
+  border-color:var(--purple-light);
+}
+/* Nos filtros Copa/Festival/Amistoso, as linhas permanecem pretas/normais.
+   As classes coloridas só são aplicadas pela Lista Geral. */
+
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap" rel="stylesheet">
 </head>
@@ -1056,9 +1090,33 @@ function classificaResultado(resultado){
 function parseDateBR(x){const m=(x||'').match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);return m?new Date(+m[3],+m[2]-1,+m[1]).getTime():0}
 function rAgenda(){
  let vt=0,dt=0,et=0;(D.agenda||[]).forEach(r=>{const c=classificaResultado(r.resultado);if(c==='V')vt++;else if(c==='D')dt++;else if(c==='E')et++});
- const ord=(D.agenda||[]).map((r,i)=>({r,i})).sort((a,b)=>parseDateBR(b.r.data)-parseDateBR(a.r.data));
- const rows=ord.map(({r,i})=>{const c=classificaResultado(r.resultado),badge=c==='V'?'<span class="badge bg">V</span>':c==='D'?'<span class="badge br">D</span>':c==='E'?'<span class="badge by">E</span>':'';const tipo=String(r.campeonato||'').toLowerCase(),rowClass=tipo.includes('amistoso')?'agenda-amistoso':tipo.includes('festival')?'agenda-festival':tipo.includes('copa')?'agenda-copa':'';return `<tr class="${rowClass}"><td contenteditable data-p="agenda.${i}.data">${r.data}</td><td contenteditable data-p="agenda.${i}.campo" style="color:var(--muted);font-size:12px">${r.campo}</td><td contenteditable data-p="agenda.${i}.adversario" style="font-family:'Rajdhani',sans-serif;font-weight:600;font-size:14px">${r.adversario}</td><td contenteditable data-p="agenda.${i}.campeonato" style="font-size:12px;color:var(--muted)">${r.campeonato}</td><td contenteditable data-p="agenda.${i}.resultado" style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:15px">${r.resultado||'—'}</td><td>${badge}</td><td contenteditable data-p="agenda.${i}.obs" style="font-size:11px;color:var(--muted)">${r.obs}</td><td class="admin-only"><button class="btn brd" onclick="del('agenda',${i})">✕</button></td></tr>`}).join('');
- return `<div class="cg"><div class="card"><div class="cl">Jogos</div><div class="cv">${(D.agenda||[]).length}</div></div><div class="card"><div class="cl">Vitórias</div><div class="cv" style="color:var(--green)">${vt}</div></div><div class="card"><div class="cl">Empates</div><div class="cv" style="color:var(--yellow)">${et}</div></div><div class="card"><div class="cl">Derrotas</div><div class="cv" style="color:var(--red)">${dt}</div></div></div><div class="entry-box admin-only"><div class="stitle">Novo jogo</div><div class="add-row"><input id="ad" placeholder="Data"><input id="ac" placeholder="Campo"><input id="aa" placeholder="Adversário"><input id="ap" placeholder="Campeonato"><input id="ar" placeholder="Resultado"><input id="ao" placeholder="Gols / Obs"><button class="btn bpu" onclick="addAgenda()">+ Jogo</button></div></div><div class="table-wrap"><table><thead><tr><th>Data</th><th>Campo</th><th>Adversário</th><th>Campeonato</th><th>Resultado</th><th></th><th>Gols / Obs</th><th class="admin-only"></th></tr></thead><tbody>${rows}</tbody></table></div>`;
+ const filtro=window.agendaFiltro||'geral';
+ const tipoAgenda=r=>{
+   const t=String(r.campeonato||'').toLowerCase();
+   if(t.includes('copa'))return 'copa';
+   if(t.includes('festival'))return 'festival';
+   if(t.includes('amistoso'))return 'amistoso';
+   return 'outros';
+ };
+ const base=(D.agenda||[]).map((r,i)=>({r,i})).sort((a,b)=>parseDateBR(b.r.data)-parseDateBR(a.r.data));
+ const ord=filtro==='geral'?base:base.filter(({r})=>tipoAgenda(r)===filtro);
+ const rows=ord.map(({r,i})=>{
+   const c=classificaResultado(r.resultado),badge=c==='V'?'<span class="badge bg">V</span>':c==='D'?'<span class="badge br">D</span>':c==='E'?'<span class="badge by">E</span>':'';
+   const tipo=tipoAgenda(r);
+   const rowClass=filtro==='geral'?(tipo==='amistoso'?'agenda-amistoso':tipo==='festival'?'agenda-festival':tipo==='copa'?'agenda-copa':''):'';
+   return `<tr class="${rowClass}"><td contenteditable data-p="agenda.${i}.data">${r.data}</td><td contenteditable data-p="agenda.${i}.campo" style="color:var(--muted);font-size:12px">${r.campo}</td><td contenteditable data-p="agenda.${i}.adversario" style="font-family:'Rajdhani',sans-serif;font-weight:600;font-size:14px">${r.adversario}</td><td contenteditable data-p="agenda.${i}.campeonato" style="font-size:12px;color:var(--muted)">${r.campeonato}</td><td contenteditable data-p="agenda.${i}.resultado" style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:15px">${r.resultado||'—'}</td><td>${badge}</td><td contenteditable data-p="agenda.${i}.obs" style="font-size:11px;color:var(--muted)">${r.obs}</td><td class="admin-only"><button class="btn brd" onclick="del('agenda',${i})">✕</button></td></tr>`;
+ }).join('');
+ const filtros=`<div class="agenda-filtros">
+   <button class="agenda-filter ${filtro==='geral'?'active':''}" onclick="setAgendaFiltro('geral')">Lista Geral</button>
+   <button class="agenda-filter ${filtro==='copa'?'active':''}" onclick="setAgendaFiltro('copa')">Copa</button>
+   <button class="agenda-filter ${filtro==='festival'?'active':''}" onclick="setAgendaFiltro('festival')">Festival</button>
+   <button class="agenda-filter ${filtro==='amistoso'?'active':''}" onclick="setAgendaFiltro('amistoso')">Amistoso</button>
+ </div>`;
+ return `<div class="cg"><div class="card"><div class="cl">Jogos</div><div class="cv">${(D.agenda||[]).length}</div></div><div class="card"><div class="cl">Vitórias</div><div class="cv" style="color:var(--green)">${vt}</div></div><div class="card"><div class="cl">Empates</div><div class="cv" style="color:var(--yellow)">${et}</div></div><div class="card"><div class="cl">Derrotas</div><div class="cv" style="color:var(--red)">${dt}</div></div></div><div class="entry-box admin-only"><div class="stitle">Novo jogo</div><div class="add-row"><input id="ad" placeholder="Data"><input id="ac" placeholder="Campo"><input id="aa" placeholder="Adversário"><input id="ap" placeholder="Campeonato"><input id="ar" placeholder="Resultado"><input id="ao" placeholder="Gols / Obs"><button class="btn bpu" onclick="addAgenda()">+ Jogo</button></div></div>${filtros}<div class="table-wrap"><table><thead><tr><th>Data</th><th>Campo</th><th>Adversário</th><th>Campeonato</th><th>Resultado</th><th></th><th>Gols / Obs</th><th class="admin-only"></th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+function setAgendaFiltro(filtro){
+ window.agendaFiltro=filtro;
+ render();
 }
 function addAgenda(){
   if(!D.agenda)D.agenda=[];
