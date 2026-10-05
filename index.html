@@ -786,6 +786,37 @@ table tbody tr.agenda-copa:hover > td{background:rgba(235,190,45,.42) !important
   justify-content:center !important;
 }
 
+
+/* Comprovante privado das Camisas 2026 */
+.receipt-upload{
+  min-width:220px;
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  padding:7px 10px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  background:var(--surface2);
+  color:var(--muted);
+  font-size:11px;
+}
+.receipt-upload input{font-size:11px;color:var(--muted)}
+.receipt-modal{
+  position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.88);
+  display:flex;align-items:center;justify-content:center;padding:22px;
+}
+.receipt-modal-box{
+  position:relative;max-width:900px;max-height:92vh;width:min(900px,96vw);
+  background:#111;border:1px solid var(--border);border-radius:12px;padding:18px;
+  overflow:auto;text-align:center;
+}
+.receipt-modal-box img{max-width:100%;max-height:72vh;object-fit:contain;border-radius:8px}
+.receipt-name{color:var(--muted);margin:0 0 12px}
+.receipt-close{
+  position:absolute;right:10px;top:8px;border:0;background:transparent;
+  color:#fff;font-size:28px;cursor:pointer;
+}
+
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap" rel="stylesheet">
 </head>
@@ -799,7 +830,6 @@ table tbody tr.agenda-copa:hover > td{background:rgba(235,190,45,.42) !important
     <button class="nb active" data-tab="inicio"><span>⌂</span> Página Inicial</button>
     <button class="nb" data-tab="cremaria"><span>▣</span> Galeria</button>
     <button class="nb" data-tab="agenda"><span>🗓</span> Agenda</button>
-    <button class="nb" data-tab="elenco"><span>👥</span> Elenco</button>
     <button class="nb" data-tab="camisas26"><span>👕</span> Camisas Torcida 2026</button>
     <details class="admin-group admin-only" id="adminMenu"><summary>🔐 Diretoria ▾</summary><div class="admin-menu-items">
       <button class="nb" data-tab="caixa"><span>💰</span> Caixa</button>
@@ -1000,7 +1030,7 @@ function render(){
   document.body.classList.toggle('cremaria-page',activeTab==='cremaria');
   const c=document.getElementById('content');
   if(!D){c.innerHTML='<div class="loading"><div class="spin"></div>Carregando...</div>';return;}
-  const m={inicio:rInicio,cremaria:rCremaria,agenda:rAgenda,elenco:rElenco,caixa:rCaixa,material:rMaterial,patrocinio:rPat,camisas:rCamisas,camisas26:rCamisas26};
+  const m={inicio:rInicio,cremaria:rCremaria,agenda:rAgenda,caixa:rCaixa,material:rMaterial,patrocinio:rPat,camisas:rCamisas,camisas26:rCamisas26};
   c.innerHTML=(m[activeTab]||rCremaria)();
   applyEditMode();
   attachEd();
@@ -1246,7 +1276,7 @@ function addPar(){if(!D.parcerias)D.parcerias=[];D.parcerias.push({empresa:v('pe
 function rCamisasBase(key){const arr=D[key]||[];const rows=arr.map((r,i)=>{const tam=r.tamanho||r.preta||r.branca||'';const ent=!!r.entregue;return `<tr><td contenteditable data-p="${key}.${i}.nome">${r.nome||''}</td><td contenteditable data-p="${key}.${i}.tamanho" style="text-align:center">${tam}</td>${isAdmin?`<td contenteditable data-p="${key}.${i}.p1">${r.p1||''}</td><td contenteditable data-p="${key}.${i}.p2">${r.p2||''}</td>`:''}<td style="text-align:center"><span class="badge ${ent?'bg':'by'}" ${isAdmin?`onclick="toggleEntregue('${key}',${i})" style="cursor:pointer"`:''}>${ent?'✓':'—'}</span></td>${isAdmin?`<td><button class="btn brd" onclick="del('${key}',${i})">✕</button></td>`:''}</tr>`}).join('');return `<div class="table-wrap"><table class="center-table"><thead><tr><th>Nome</th><th>Tamanho pedido</th>${isAdmin?'<th>1ª Parc.</th><th>2ª Parc.</th>':''}<th>Entregue</th>${isAdmin?'<th></th>':''}</tr></thead><tbody>${rows}</tbody></table></div><div class="add-row admin-only"><input id="${key}-n" placeholder="Nome"><input id="${key}-pt" placeholder="Tamanho"><input id="${key}-p1" placeholder="1ª Parcela"><input id="${key}-p2" placeholder="2ª Parcela"><button class="btn bpu" onclick="addCamisa('${key}')">+ Pedido</button></div>`}
 function toggleEntregue(key,i){if(!isAdmin)return;D[key][i].entregue=!D[key][i].entregue;sched();render()}
 function rCamisas(){return rCamisasBase('camisas')}
-function camisaCampos(){const q=Math.max(1,parseInt(v('c26-qtd'))||1),box=document.getElementById('shirt-items');if(!box)return;box.innerHTML=Array.from({length:q},(_,i)=>`<div class="shirt-item"><b>Camiseta ${i+1}</b><select id="c26-t-${i}"><option value="">Tamanho</option><option>PP</option><option>P</option><option>M</option><option>G</option><option>GG</option><option>G1</option><option>G2</option><option>G3</option></select><select id="c26-m-${i}"><option value="">Modelo</option><option>Listrada</option><option>Faixa</option></select></div>`).join('')}
+function camisaCampos(){const q=Math.max(1,parseInt(v('c26-qtd'))||1),box=document.getElementById('shirt-items');if(!box)return;box.innerHTML=Array.from({length:q},(_,i)=>`<div class="shirt-item"><b>Camiseta ${i+1}</b><select id="c26-t-${i}"><option value="">Tamanho</option><option>PP</option><option>P</option><option>M</option><option>G</option><option>GG</option><option>G1</option><option>G2</option><option>G3</option></select><select id="c26-m-${i}"><option value="">Modelo</option><option>Roxo e Preto</option><option>Roxo e Branco</option></select></div>`).join('')}
 
 function syncConfirmationLogos(){
   const top=document.querySelector('.logo-wrap img');
@@ -1271,6 +1301,10 @@ function rCamisas26(){
       <input id="c26-n" placeholder="Nome">
       <input id="c26-fone" placeholder="Telefone para contato">
       <input id="c26-qtd" type="number" min="1" max="20" placeholder="Quantidade" oninput="camisaCampos()">
+      <label class="receipt-upload">
+        <span>Comprovante de pagamento</span>
+        <input id="c26-comprovante" type="file" accept="image/*">
+      </label>
     </div>
     <div id="shirt-items"></div>
     <button class="btn bpu public-confirm" style="margin-top:10px" onclick="addCamisaPublica()">Confirmar pedido</button>
@@ -1284,33 +1318,61 @@ function rCamisas26(){
     <td>${r.tamanho||r.preta||''}</td>
     <td>${r.modelo||''}</td>
     <td>${r.telefone||''}</td>
+    <td>${r.comprovante?`<button class="btn bpu" onclick="verComprovante(${i})">Ver imagem</button>`:'—'}</td>
     <td><span class="badge ${r.entregue?'bg':'by'}" onclick="toggleEntregue('camisas26',${i})" style="cursor:pointer">${r.entregue?'✓':'—'}</span></td>
     <td><button class="btn brd" onclick="del('camisas26',${i})">✕</button></td>
   </tr>`).join('');
   return confirmacao+form+`<div class="public-shirt-total"><span>Total de camisetas pedidas</span><b>${total}</b></div>
   <div class="table-wrap"><table class="center-table">
-    <thead><tr><th>Nome</th><th>Tamanho pedido</th><th>Modelo</th><th>Telefone</th><th>Entregue</th><th></th></tr></thead>
+    <thead><tr><th>Nome</th><th>Tamanho pedido</th><th>Modelo</th><th>Telefone</th><th>Comprovante</th><th>Entregue</th><th></th></tr></thead>
     <tbody>${rows}</tbody>
   </table></div>`;
 }
 function addCamisaPublica(){
   const nome=v('c26-n').trim(),fone=v('c26-fone').trim(),q=Math.max(1,parseInt(v('c26-qtd'))||1);
+  const fileInput=document.getElementById('c26-comprovante');
+  const file=fileInput&&fileInput.files&&fileInput.files[0];
   if(!nome||!fone){alert('Preencha nome e telefone.');return}
-  const novos=[];
+  if(!file){alert('Anexe a imagem do comprovante de pagamento.');return}
+  if(file.size>3500000){alert('Escolha uma imagem de comprovante de até 3,5 MB.');return}
+  const itens=[];
   for(let i=0;i<q;i++){
     const tamanho=v('c26-t-'+i),modelo=v('c26-m-'+i);
     if(!tamanho||!modelo){alert('Escolha tamanho e modelo de cada camiseta.');return}
-    novos.push({nome,tamanho,modelo,telefone:fone,entregue:false});
+    itens.push({tamanho,modelo});
   }
-  if(!D.camisas26)D.camisas26=[];
-  D.camisas26.push(...novos);
-  pedidoConfirmado=true;
-  save();
-  render();
-  syncConfirmationLogos();
-  const box=document.querySelector('.order-confirmation');
-  if(box)box.scrollIntoView({behavior:'smooth',block:'start'});
+  const reader=new FileReader();
+  reader.onload=()=>{
+    const comprovante=reader.result;
+    const novos=itens.map(({tamanho,modelo})=>({nome,tamanho,modelo,telefone:fone,comprovante,entregue:false}));
+    if(!D.camisas26)D.camisas26=[];
+    D.camisas26.push(...novos);
+    pedidoConfirmado=true;
+    save();
+    render();
+    syncConfirmationLogos();
+    const box=document.querySelector('.order-confirmation');
+    if(box)box.scrollIntoView({behavior:'smooth',block:'start'});
+  };
+  reader.readAsDataURL(file);
 }
+function verComprovante(i){
+  if(!isAdmin)return;
+  const r=(D.camisas26||[])[i];
+  if(!r||!r.comprovante)return;
+  const overlay=document.createElement('div');
+  overlay.className='receipt-modal';
+  overlay.innerHTML=`<div class="receipt-modal-box">
+    <button class="receipt-close" aria-label="Fechar">×</button>
+    <div class="stitle">Comprovante de pagamento</div>
+    <div class="receipt-name">${escHtml(r.nome||'')}</div>
+    <img src="${r.comprovante}" alt="Comprovante de pagamento">
+  </div>`;
+  overlay.onclick=e=>{if(e.target===overlay)overlay.remove()};
+  overlay.querySelector('.receipt-close').onclick=()=>overlay.remove();
+  document.body.appendChild(overlay);
+}
+
 function addCamisa(key){if(!D[key])D[key]=[];D[key].push({nome:v(key+'-n'),tamanho:v(key+'-pt'),p1:v(key+'-p1'),p2:v(key+'-p2'),entregue:false});sched();render()}
 
 // ── UTILS ─────────────────────────────────────────────────────────────────────
