@@ -1481,7 +1481,18 @@ function addCamisaPublica(){
   const reader=new FileReader();
   reader.onload=()=>{
     const comprovante=reader.result,novos=itens.map(({tamanho,modelo})=>({nome,tamanho,modelo,telefone:fone,comprovante,entregue:false}));
-    if(!D.camisas26)D.camisas26=[];D.camisas26.push(...novos);pedidoConfirmado=true;save();render();syncConfirmationLogos();
+    if(!D.camisas26)D.camisas26=[];
+    D.camisas26.push(...novos);
+    if(!D.caixa)D.caixa=[];
+    const hoje=new Date().toLocaleDateString('pt-BR');
+    itens.forEach(()=>D.caixa.push({
+      data:hoje,
+      descricao:nome+' (camiseta)',
+      valor:'R$ 120,00',
+      saldo:''
+    }));
+    recalcCaixa('caixa');
+    pedidoConfirmado=true;save();render();syncConfirmationLogos();
     const box=document.querySelector('.order-confirmation');if(box)box.scrollIntoView({behavior:'smooth',block:'start'});
   };
   reader.readAsDataURL(file);
