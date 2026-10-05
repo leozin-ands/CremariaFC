@@ -963,6 +963,40 @@ table tbody tr.agenda-copa:hover > td{background:rgba(235,190,45,.42) !important
   .shirt-payment-pix .btn{margin-top:8px}
 }
 
+
+/* Confirmação do pedido: escudos do Cremaria nos dois lados */
+.order-confirmation{
+  display:grid !important;
+  grid-template-columns:110px minmax(0,1fr) 110px !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:20px !important;
+  text-align:center !important;
+}
+.order-confirmation img{
+  display:block !important;
+  width:110px !important;
+  height:110px !important;
+  object-fit:contain !important;
+  margin:auto !important;
+  background:transparent !important;
+}
+.order-confirmation-text{
+  width:100% !important;
+  text-align:center !important;
+  justify-self:center !important;
+}
+@media(max-width:600px){
+  .order-confirmation{
+    grid-template-columns:72px minmax(0,1fr) 72px !important;
+    gap:10px !important;
+  }
+  .order-confirmation img{
+    width:72px !important;
+    height:72px !important;
+  }
+}
+
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap" rel="stylesheet">
 </head>
